@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html>
+<title>File Metada Service</title>
+<head>
+    <style>
+        body, html {
+            background-color: #e6f7ff;
+            height: 100%;
+        }
+        
+        body, main, section {
+            margin: 0;
+            padding: 0;
+        }
+        
+        main {
+            display: -webkit-box;
+            display: -moz-box;
+            display: -ms-flexbox;
+            display: -webkit-flex;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .content {
+            width: 800px;
+            height: 200px;
+            box-shadow: 1px 1px 10px rgba(180,180,180, 0.75);
+            padding: 10px;
+            box-sizing: border-box;
+            background: #fff;
+        }
+        
+        .header {
+            
+            font-size: 20px;
+            font-weight: bold;
+            color:#4da6ff;
+            text-align: left;
+        }
+        
+        input {
+            margin-top: 10px;
+            display: block;
+        }
+        
+        div.thumbDiv {
+            width: 50px;
+            height: 50px;
+            border: 2px #777 solid;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+        
+        .resultDiv {
+            margin-top: 10px;
+            overflow: hidden;
+            position: relative;
+            left: 400px;
+            top: -160px;
+            opacity: 0;
+        }
+        
+        .fileContent {
+            width: 200px;
+            height: 100px;
+            border: 4px #333 solid;
+            overflow: hidden;
+            
+        }
+        
+        .fileContent .objText {
+            font-size: 12px;
+            color: #111;
+        }
+        
+        .fileContent .objImg {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .info {
+            font-size: 18px;
+            color: red;
+            margin: 0;
+        }
+        
+        .progress {
+            margin-top: 10px;
+            color: green;
+            font-size: 12px;
+        }
+        
+    </style>
+    <script>
+    
+    
+        function handlefile(files){
+
+                var preview = document.getElementsByClassName("thumbDiv")[0];
+                var file = files[0];
+                
+                //var imgType = /^image\//;
+                
+                //createElement(file, preview, /^image\//);
+          
+        }
+        
+        function sendData(form){
+                var XHR = new XMLHttpRequest();
+                //var fd = new FormData(document.forms.namedItem("myform"));
+                var formdata = new FormData(form);
+                var file = document.getElementById("file").files[0];
+                var progress = document.getElementsByClassName("progress")[0];
+                var resultDiv = document.getElementById("result");
+                var contain = document.getElementById("fileContent");
+                
+                resultDiv.style.opacity = 0;
+                
+                //clear out container    
+                while(contain.firstChild){
+                    contain.firstChild.classList = "";
+                    contain.removeChild(contain.firstChild);
+                }
+                
+                
+                XHR.open("POST", form.getAttribute('action'), true);
+                
+                XHR.onload = function(e){
+                    
+                    var contain = document.getElementById("fileContent");
+                     
+                    if(XHR.status == 200){
+                        createElement(file, contain, /^image\//, JSON.parse(XHR.response), resultDiv);
+                    }else{
+                        console.log('error');
+                    }
+                }
+                
+                XHR.upload.onprogress = function(e){
+                    if(e.lengthComputable){
+                        var percent = e.loaded/e.total;
+                        progress.innerHTML = "Upload Progress: " + Math.ceil(percent*100) + " %";
+                       
+                    }
+                        
+                    
+                }
+                 
+                 //XHR.setRequestHeader("Content-Type", "Content-Type: multipart/form-data; boundary=" + boundary);
+                
+                 XHR.send(formdata);
+                 
+                 //return false;
+               
+            }
+            
+            function createElement(file, container, imgType, result, resultDiv){
+                 var reader = new FileReader();
+                 resultDiv.style.opacity = 1;
+                 
+                 if(result){
+                    var newDiv = document.getElementById("info");
+                    newDiv.classList.add("info");
+                    newDiv.innerHTML = "<p>File Size: " + result.size + "<br/>" + "File type: " + result.type + "</p>";
+                   
+                }
+                 
+                 while(container.firstChild){
+                    container.removeChild(container.firstChild);
+                }
+                
+                if(imgType.test(file.type)){
+                    var img = document.createElement("img");
+                    //img.classList.add("fileContent");
+                    img.classList.add("objImg");
+                    container.appendChild(img);
+            
+                    
+                    reader.onload = function(e){ img.src = e.target.result};
+                    reader.readAsDataURL(file);
+                }else{
+                    var p = document.createElement("p");
+                    //p.classList.add("fileContent");
+                    p.classList.add("objText");
+                    container.appendChild(p);
+                    reader.onload = function(e){p.innerHTML = e.target.result};
+                    reader.readAsText(file);
+                }
+                
+                
+                 
+                 
+            }
+        
+            window.onload = function(){
+                var form = document.getElementById('fileform');
+                form.addEventListener("submit", function(e){
+                    e.preventDefault();
+                    sendData(form);
+                });
+            };
+            
+    </script>
+</head>
+<body>
+<main>
+    <section class="content">
+        <p class="header">File Metadata</p>
+        <form id="fileform" enctype="multipart/form-data" action="/uploads">
+            <input type="file" id="file" name="fileupload" onchange="handlefile(this.files)">
+            <input type="submit" value="Submit">
+        </form>
+        <div class="progress">
+            
+        </div>
+        <div id="result" class="resultDiv">
+            <div id="info" ></div>
+            <div id="fileContent" class="fileContent"></div>
+        </div>
+    </section>
+
+</main>
+</body>
+</html>
